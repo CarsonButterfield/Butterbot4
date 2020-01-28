@@ -1,0 +1,4 @@
+package-lock.json
+config.json
+**.js
+node_modules
