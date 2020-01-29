@@ -1,16 +1,23 @@
 const Discord = require('discord.js')
 const mongoose = require('mongoose')
+const express = require('express')
+const {scheduleJob} = require('node-schedule')
+const bodyParser = require('body-parser')
+const app = express()
 const client = new Discord.Client()
+//where the sorted final voice logs are stored before being sent to the db
+const guildMap = {}
+//where the users are stored when they are currently online, mapped based on there Discord user id 
+const userMap = {}
+const PORT = process.env.PORT || 4000
+
 const config = require('./config.json')
 const commands = require('./commands')
 const db = require('./Models')
+const routes = require('./Routes')
 
-//where the sorted final voice logs are stored before being sent to the db
-const guildMap = {}
-
-//where the users are stored when they are currently online, mapped based on there Discord user id 
-const userMap = {}
-
+app.listen(PORT, ()=> console.log(`waiting for commands on port ${PORT}`))
+app.use(bodyParser.json())
 
 class voiceLog {
   id:String;
@@ -95,7 +102,7 @@ client.on('message', (msg)=> {
   if(content[0] !== 'b3') return
 
   if (commands[content[1]]){
-    commands[content[1]](msg,args)
+    commands[content[1]](msg,args,client)
   }
 
   else{
@@ -104,7 +111,9 @@ client.on('message', (msg)=> {
 
 })
 
-
+scheduleJob({minute:1}, ()=>{
+  exportVoiceLogs()
+})
 
 client.on('voiceStateUpdate',(oldMember,newMember) => {
 //checks whether its a user coming online or going offline
@@ -120,7 +129,8 @@ client.on('voiceStateUpdate',(oldMember,newMember) => {
           }
           //this checks if they changed channels but are still online
           else if (oldMember.voiceChannelID != newMember.voiceChannelID) {
-              return 
+            makeFinalLog(newMember.id,oldMember.guild.id)
+            makeUserLog(newMember)
           }
       } else {
           makeFinalLog(newMember.id,oldMember.guild.id)
@@ -129,3 +139,14 @@ client.on('voiceStateUpdate',(oldMember,newMember) => {
        makeUserLog(newMember)
   }
 })
+
+
+//API COMMANDS
+app.post('/command',(req,res) => {
+const {command,...args} = req.body
+commands[command](null,args,client)
+})
+
+
+
+

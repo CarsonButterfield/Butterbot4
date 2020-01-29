@@ -1,6 +1,8 @@
-const hello = (msg) => {
-  msg.channel.send('sawh dude')
+
+const hello = (msg,args,client) => {
+  const {channel,message} = args
+  client.channels.get(channel).send(message)
 }
 
 
-module.exports = hello
+export = hello
