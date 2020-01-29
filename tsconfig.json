@@ -10,7 +10,6 @@
     "./commands/showLogs.ts",
     "./commands/nuke.ts",
     "./commands/exportLogs.ts",
-    "./Routes/index.ts",
 
 
 

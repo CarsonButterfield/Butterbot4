@@ -14,70 +14,79 @@ const PORT = process.env.PORT || 4000
 const config = require('./config.json')
 const commands = require('./commands')
 const db = require('./Models')
-const routes = require('./Routes')
 
-app.listen(PORT, ()=> console.log(`waiting for commands on port ${PORT}`))
+app.listen(PORT, () => console.log(`waiting for commands on port ${PORT}`))
 app.use(bodyParser.json())
 
 class voiceLog {
-  id:String;
-  timeJoined:Date;
-  timeLeft:Date;
-  voiceChannel:String
-  constructor({id,timeJoined,timeLeft,voiceChannel}){
+  id: String;
+  timeJoined: Date;
+  timeLeft: Date;
+  voiceChannel: String
+  constructor({
+    id,
+    timeJoined,
+    timeLeft,
+    voiceChannel
+  }) {
     this.id = id,
-    this.timeJoined = timeJoined,
-    this.timeLeft = timeLeft,
-    this.voiceChannel = voiceChannel
+      this.timeJoined = timeJoined,
+      this.timeLeft = timeLeft,
+      this.voiceChannel = voiceChannel
   }
 }
 
 //tracker functions
 const makeUserLog = (user) => {
   const newLog = {
-    id:user.id,
+    id: user.id,
     timeJoined: Date.now(),
-    voiceChannel:user.voiceChannelID
-    
+    voiceChannel: user.voiceChannelID
+
   }
-  userMap[user.id] = newLog 
+  userMap[user.id] = newLog
 }
 
-const makeFinalLog = (userID,guildID) => {
+const makeFinalLog = (userID, guildID) => {
 
- const finaLog = new voiceLog({ 
-   ...userMap[userID],
-    timeLeft : Date.now()})
+  const finaLog = new voiceLog({
+    ...userMap[userID],
+    timeLeft: Date.now()
+  })
   guildMap[guildID].push(finaLog)
   delete userMap[userID]
 }
 
 // makes the guildmap for the voicelogs to be sorted into
 const makeGuildmap = () => {
-  for( let guild of client.guilds.array()){
-    guildMap[guild.id] = []}
-  
+  for (let guild of client.guilds.array()) {
+    guildMap[guild.id] = []
+  }
+
 }
-const showAllGuilds = async() => {
+const showAllGuilds = async () => {
   try {
     const guilds = await db.Guild.find({})
     console.log(guilds)
-    
+
   } catch (err) {
     console.log(err)
   }
 }
-const exportVoiceLogs = async() => {
-  for(const guild in guildMap){
+const exportVoiceLogs = async () => {
+  for (const guild in guildMap) {
     try {
-      const dbGuild = await db.Guild.findOne({id:guild});
-      if(dbGuild){
-        dbGuild.voiceLogs = [...dbGuild.voiceLogs,...guildMap[guild]]
+      const dbGuild = await db.Guild.findOne({
+        id: guild
+      });
+      if (dbGuild) {
+        dbGuild.voiceLogs = [...dbGuild.voiceLogs, ...guildMap[guild]]
         dbGuild.save()
         guildMap[guild] = []
-      }
-      else{
-        db.Guild.create({id:guild})
+      } else {
+        db.Guild.create({
+          id: guild
+        })
       }
     } catch (err) {
       console.log(err)
@@ -91,62 +100,70 @@ client.on('ready', () => {
   console.log('client ready')
 })
 
-client.on('message', (msg)=> {
-  let {content} = msg;
-  if(content === 'b3 export') {
+client.on('message', (msg) => {
+  let {
+    content
+  } = msg;
+  if (content === 'b3 export') {
     exportVoiceLogs()
     return console.log('exported')
   }
   content = content.split(' ')
   const args = content.slice(1)
-  if(content[0] !== 'b3') return
+  if (content[0] !== 'b3') return
 
-  if (commands[content[1]]){
-    commands[content[1]](msg,args,client)
-  }
-
-  else{
+  if (commands[content[1]]) {
+    commands[content[1]](msg, args, client)
+  } else {
     msg.channel.send('Im sorry, I dont recognize that command')
   }
 
 })
 
-scheduleJob({minute:1}, ()=>{
+scheduleJob({
+  minute: 1
+}, () => {
   exportVoiceLogs()
 })
 
-client.on('voiceStateUpdate',(oldMember,newMember) => {
-//checks whether its a user coming online or going offline
-//0 is a mute/unmute, should be ignored
-//1 is a channel change
-//2 is going offline
-//3 is coming online
+client.on('voiceStateUpdate', (oldMember, newMember) => {
+  //checks whether its a user coming online or going offline
+  //0 is a mute/unmute, should be ignored
+  //1 is a channel change
+  //2 is going offline
+  //3 is coming online
   if (oldMember.voiceChannel) {
-      if (newMember.voiceChannel) {
-          //if the channelID's are the same it means it was just a mute/unmute
-          if (oldMember.voiceChannelID === newMember.voiceChannelID) {
-              return
-          }
-          //this checks if they changed channels but are still online
-          else if (oldMember.voiceChannelID != newMember.voiceChannelID) {
-            makeFinalLog(newMember.id,oldMember.guild.id)
-            makeUserLog(newMember)
-          }
-      } else {
-          makeFinalLog(newMember.id,oldMember.guild.id)
+    if (newMember.voiceChannel) {
+      //if the channelID's are the same it means it was just a mute/unmute
+      if (oldMember.voiceChannelID === newMember.voiceChannelID) {
+        return
       }
+      //this checks if they changed channels but are still online
+      else if (oldMember.voiceChannelID != newMember.voiceChannelID) {
+        makeFinalLog(newMember.id, oldMember.guild.id)
+        makeUserLog(newMember)
+      }
+    } else {
+      makeFinalLog(newMember.id, oldMember.guild.id)
+    }
   } else {
-       makeUserLog(newMember)
+    makeUserLog(newMember)
   }
 })
 
 
 //API COMMANDS
-app.post('/command',(req,res) => {
-const {command,...args} = req.body
-commands[command](null,args,client)
+app.post('/command', (req, res) => {
+  const {command,...args} = req.body
+  if (commands[command]) {
+    commands[command](null, args, client)
+    return res.status(200).json({
+      msg: 'success',
+      status: 200
+    })
+  }
+  return res.status(500).json({
+    status: 500,
+    err: "command not found"
+  })
 })
-
-
-
-
