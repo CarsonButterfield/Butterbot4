@@ -1,5 +1,6 @@
 module.exports = {
-  hello : require('./hello'),
+  msg : require('./msg'),
   showLogs : require('./showLogs'),
-  nuke : require('./nuke')
+  nuke : require('./nuke'),
+  createListener : require('./createListener')
 }

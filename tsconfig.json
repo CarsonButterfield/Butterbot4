@@ -5,7 +5,7 @@
     "./Models/index.ts",
     "./Models/MsgLog.ts",
     "./Models/VoiceLog.ts",
-    "./commands/hello.ts",
+    "./commands/msg.ts",
     "./commands/index.ts",
     "./commands/showLogs.ts",
     "./commands/nuke.ts",

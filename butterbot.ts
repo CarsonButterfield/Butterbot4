@@ -53,14 +53,18 @@ const makeFinalLog = (userID, guildID) => {
     ...userMap[userID],
     timeLeft: Date.now()
   })
-  guildMap[guildID].push(finaLog)
+  guildMap[guildID].voiceLogs.push(finaLog)
   delete userMap[userID]
 }
 
 // makes the guildmap for the voicelogs to be sorted into
 const makeGuildmap = () => {
   for (let guild of client.guilds.array()) {
-    guildMap[guild.id] = []
+    guildMap[guild.id] = {
+      voiceLogs:[],
+      messageLogs:[],
+      commands:{}
+    }
   }
 
 }
@@ -80,13 +84,15 @@ const exportVoiceLogs = async () => {
         id: guild
       });
       if (dbGuild) {
-        dbGuild.voiceLogs = [...dbGuild.voiceLogs, ...guildMap[guild]]
+        dbGuild.voiceLogs.push(...guildMap[guild].voiceLogs)
         dbGuild.save()
-        guildMap[guild] = []
+        guildMap[guild].voiceLogs = []
       } else {
         db.Guild.create({
-          id: guild
+          id: guild,
+          voiceLogs: guildMap[guild].voiceLogs
         })
+        guildMap[guild].voiceLogs = []
       }
     } catch (err) {
       console.log(err)
@@ -101,23 +107,14 @@ client.on('ready', () => {
 })
 
 client.on('message', (msg) => {
-  let {
-    content
-  } = msg;
-  if (content === 'b3 export') {
-    exportVoiceLogs()
-    return console.log('exported')
+let content = msg.content.split(' ')
+content.foreach(word => {
+  if(guildMap[msg.guild.id].commands[word]){
+    const {cmd, ...args} = guildMap[msg.guild.id].commands[word]
+    commands[cmd]({...args,client})
   }
-  content = content.split(' ')
-  const args = content.slice(1)
-  if (content[0] !== 'b3') return
-
-  if (commands[content[1]]) {
-    commands[content[1]](msg, args, client)
-  } else {
-    msg.channel.send('Im sorry, I dont recognize that command')
-  }
-
+  
+})
 })
 
 scheduleJob({
@@ -156,7 +153,7 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
 app.post('/command', (req, res) => {
   const {command,...args} = req.body
   if (commands[command]) {
-    commands[command](null, args, client)
+    commands[command]({...args,client})
     return res.status(200).json({
       msg: 'success',
       status: 200
