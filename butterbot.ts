@@ -108,13 +108,16 @@ client.on('ready', () => {
 
 client.on('message', (msg) => {
 let content = msg.content.split(' ')
-content.foreach(word => {
+console.log({content})
+  for(let word of content){
+    console.log(word)
   if(guildMap[msg.guild.id].commands[word]){
     const {cmd, ...args} = guildMap[msg.guild.id].commands[word]
-    commands[cmd]({...args,client})
+    commands[cmd]({...args,client,channel:msg.channel.id})
   }
+}
   
-})
+
 })
 
 scheduleJob({
@@ -163,4 +166,13 @@ app.post('/command', (req, res) => {
     status: 500,
     err: "command not found"
   })
+})
+//API CUSTOM LISTENERS
+app.post('/listener',(req,res) => {
+    const { word, response, guild } = req.body
+    guildMap[guild].commands[word] = response
+    return res.status(201).json({status:201,msg:"Success"})
+    
+  
+  
 })
