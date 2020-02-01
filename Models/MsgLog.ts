@@ -10,4 +10,4 @@ const MsgLogSchema = new Schema({
 const MsgLog = model('MsgLog', MsgLogSchema);
 
 
-export = MsgLog
+export default MsgLog

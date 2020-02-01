@@ -108,13 +108,11 @@ client.on('ready', () => {
 
 client.on('message', (msg) => {
 let content = msg.content.split(' ')
-console.log({content})
   for(let word of content){
-    console.log(word)
-  if(guildMap[msg.guild.id].commands[word]){
-    const {cmd, ...args} = guildMap[msg.guild.id].commands[word]
-    commands[cmd]({...args,client,channel:msg.channel.id})
-  }
+    if(guildMap[msg.guild.id].commands[word]){
+      const {cmd, ...args} = guildMap[msg.guild.id].commands[word]
+      commands[cmd]({...args,client,msg})
+    }
 }
   
 
@@ -172,7 +170,4 @@ app.post('/listener',(req,res) => {
     const { word, response, guild } = req.body
     guildMap[guild].commands[word] = response
     return res.status(201).json({status:201,msg:"Success"})
-    
-  
-  
 })

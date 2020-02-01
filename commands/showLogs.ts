@@ -9,4 +9,4 @@ const showLogs = async(msg,args) => {
   }
 }
 
-export = showLogs
+export default showLogs

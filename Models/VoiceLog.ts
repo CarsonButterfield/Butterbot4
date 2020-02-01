@@ -10,4 +10,4 @@ const voiceLogSchema = new Schema({
 
 const VoiceLog = model('VoiceLog',voiceLogSchema)
 
-export = VoiceLog
+export default VoiceLog

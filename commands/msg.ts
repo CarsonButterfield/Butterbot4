@@ -1,4 +1,5 @@
-const msg = async({content,channel,client}) => {
+const msg = async({content,channel,client,msg}) => {
+  if(msg) channel = msg.channel.id
   try {
     client.channels.get(channel).send(content)
   } catch (err) {
@@ -6,4 +7,4 @@ const msg = async({content,channel,client}) => {
   }
 }
 
-export = msg
+module.exports = msg

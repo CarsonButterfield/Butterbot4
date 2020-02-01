@@ -8,4 +8,4 @@ const nuke = (msg,args) => {
   })
 }
 
-export = nuke ;
+export default nuke ;

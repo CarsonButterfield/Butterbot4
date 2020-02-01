@@ -1,4 +1,9 @@
 {
+  "compilerOptions": {
+    "target": "esnext",
+    "lib":["es2017"],
+    "types":["node"]
+  },
   "files":[
     "butterbot.ts",
     "./Models/Guild.ts",
