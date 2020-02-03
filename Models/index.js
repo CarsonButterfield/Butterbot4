@@ -11,7 +11,7 @@ mongoose.connect(DBURI, {
     .then(() => console.log('MongoDB connected...'))
     .catch((err) => console.log(`MongoDB connection error": ${err}`));
 
-export default {
+  module.exports = {
   MsgLog : require('./MsgLog'),
   Guild : require('./Guild'),
   VoiceLog : require ('./VoiceLog'),

@@ -11,4 +11,4 @@ const DServerSchema = new Schema({
 
 const DServer = model('DServer', DServerSchema )
 
-export default DServer
+module.exports = DServer

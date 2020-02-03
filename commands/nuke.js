@@ -8,4 +8,4 @@ const nuke = (msg,args) => {
   })
 }
 
-export default nuke ;
+module.exports = nuke ;

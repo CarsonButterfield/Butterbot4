@@ -13,16 +13,13 @@ const PORT = process.env.PORT || 4000
 
 const config = require('./config.json')
 const commands = require('./commands')
+const events = require('./events')
 const db = require('./Models')
 
 app.listen(PORT, () => console.log(`waiting for commands on port ${PORT}`))
 app.use(bodyParser.json())
 
 class voiceLog {
-  id: String;
-  timeJoined: Date;
-  timeLeft: Date;
-  voiceChannel: String
   constructor({
     id,
     timeJoined,
@@ -63,7 +60,9 @@ const makeGuildmap = () => {
     guildMap[guild.id] = {
       voiceLogs:[],
       messageLogs:[],
-      commands:{}
+      events:{
+        message:{}
+      }
     }
   }
 
@@ -77,6 +76,13 @@ const showAllGuilds = async () => {
     console.log(err)
   }
 }
+
+scheduleJob({
+  minute: 1
+}, () => {
+  exportVoiceLogs()
+})
+
 const exportVoiceLogs = async () => {
   for (const guild in guildMap) {
     try {
@@ -107,22 +113,18 @@ client.on('ready', () => {
 })
 
 client.on('message', (msg) => {
+  if(!msg.guild) return;
 let content = msg.content.split(' ')
   for(let word of content){
-    if(guildMap[msg.guild.id].commands[word]){
-      const {cmd, ...args} = guildMap[msg.guild.id].commands[word]
-      commands[cmd]({...args,client,msg})
+    if(guildMap[msg.guild.id].events.message[word]){
+      const {cmd, ...args} = guildMap[msg.guild.id].events.message[word]
+      events.message[cmd]({...args,client,msg})
     }
 }
   
 
 })
 
-scheduleJob({
-  minute: 1
-}, () => {
-  exportVoiceLogs()
-})
 
 client.on('voiceStateUpdate', (oldMember, newMember) => {
   //checks whether its a user coming online or going offline
@@ -167,7 +169,10 @@ app.post('/command', (req, res) => {
 })
 //API CUSTOM LISTENERS
 app.post('/listener',(req,res) => {
-    const { word, response, guild } = req.body
-    guildMap[guild].commands[word] = response
+    let { response, guild, type } = req.body
+    if(type === "message" ){
+      let {word} = req.body
+      guildMap[guild].events.message[word] = response
+    }
     return res.status(201).json({status:201,msg:"Success"})
 })
