@@ -169,10 +169,9 @@ app.post('/command', (req, res) => {
 })
 //API CUSTOM LISTENERS
 app.post('/listener',(req,res) => {
-    let { response, guild, type } = req.body
+    const { response, guild, type } = req.body
     if(type === "message" ){
-      let {word} = req.body
-      guildMap[guild].events.message[word] = response
+      guildMap[guild].events.message[req.body.word] = response
     }
     return res.status(201).json({status:201,msg:"Success"})
 })
