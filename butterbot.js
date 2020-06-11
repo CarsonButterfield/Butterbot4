@@ -4,6 +4,7 @@ const express = require('express')
 const {scheduleJob} = require('node-schedule')
 const bodyParser = require('body-parser')
 const app = express()
+const cors = require('cors')
 const client = new Discord.Client()
 //where the sorted final voice logs are stored before being sent to the db
 const guildMap = {}
@@ -16,8 +17,8 @@ const commands = require('./commands')
 const events = require('./events')
 const db = require('./Models')
 
-app.listen(PORT, () => console.log(`waiting for commands on port ${PORT}`))
 app.use(bodyParser.json())
+app.use(cors())
 
 class voiceLog {
   constructor({
@@ -153,14 +154,23 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
 
 
 //API COMMANDS
-app.post('/command', (req, res) => {
+app.get('/command', (req, res) => {
+  res.status(200).json({yes:"yes"})
+})
+app.post('/command', async (req, res) => {
+  console.log(req.body)
   const {command,...args} = req.body
   if (commands[command]) {
-    commands[command]({...args,client})
-    return res.status(200).json({
-      msg: 'success',
-      status: 200
-    })
+    try{
+      commands[command]({...args,client})
+      return res.status(200).json({
+        msg: 'success',
+        status: 200
+      })
+    }
+    catch(err){
+      console.log(err)
+    }
   }
   return res.status(500).json({
     status: 500,
@@ -169,9 +179,12 @@ app.post('/command', (req, res) => {
 })
 //API CUSTOM LISTENERS
 app.post('/listener',(req,res) => {
-    const { response, guild, type } = req.body
+    const { response, guild, type, word } = req.body
     if(type === "message" ){
-      guildMap[guild].events.message[req.body.word] = response
+      guildMap[guild].events.message[word] = response
     }
     return res.status(201).json({status:201,msg:"Success"})
 })
+
+
+app.listen(PORT, () => console.log(`waiting for commands on port ${PORT}`))
