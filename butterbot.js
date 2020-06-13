@@ -1,10 +1,14 @@
 const Discord = require('discord.js')
 const mongoose = require('mongoose')
-const express = require('express')
 const {scheduleJob} = require('node-schedule')
+//API librarys 
 const bodyParser = require('body-parser')
+const express = require('express')
 const app = express()
 const cors = require('cors')
+const session = require('express-session');
+const MongoStore = require('connect-mongo')(session);
+
 const client = new Discord.Client()
 //where the sorted final voice logs are stored before being sent to the db
 const guildMap = {}
@@ -17,8 +21,23 @@ const commands = require('./commands')
 const events = require('./events')
 const db = require('./Models')
 
+const corsOptions = {
+  origin:['http://localhost:3000'],
+  credentials: true,
+  optionsSuccessStatus: 200
+}
 app.use(bodyParser.json())
-app.use(cors())
+app.use(cors(corsOptions))
+app.use(session({
+  store: new MongoStore({ url: 'mongodb://localhost:27017/butterbot' }),
+  secret: 'this is not the real secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 * 7,
+  }
+}));
+
 
 class voiceLog {
   constructor({
@@ -154,8 +173,14 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
 
 
 //API COMMANDS
-app.get('/command', (req, res) => {
-  res.status(200).json({yes:"yes"})
+app.post('/login', (req, res) => {
+  req.session.user = req.body
+  res.status(200).json({msg:"Session Created"})
+})
+app.get('/testsession',(req,res) =>{
+  console.log(req.session)
+  console.log('beep')
+  res.status(200)
 })
 app.post('/command', async (req, res) => {
   console.log(req.body)
