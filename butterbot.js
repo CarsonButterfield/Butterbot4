@@ -8,6 +8,7 @@ const app = express()
 const cors = require('cors')
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
+const axios = require('axios')
 
 const client = new Discord.Client()
 //where the sorted final voice logs are stored before being sent to the db
@@ -174,8 +175,24 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
 
 //API COMMANDS
 app.post('/login', (req, res) => {
-  req.session.user = req.body
-  res.status(200).json({msg:"Session Created"})
+  const {tokenType, accessToken} = req.body
+  axios.get('https://discordapp.com/api/users/@me', {
+            headers: {
+                authorization: `${tokenType} ${accessToken}`
+            }
+        })
+            .then(response => {
+                req.session.user = response.data
+                console.log(response)
+                res.status(200).json(response.data)
+            })
+            .catch(console.error);
+ 
+})
+
+app.delete('/logout', (req, res) => {
+  req.session.destroy()
+  res.status(200)
 })
 app.get('/testsession',(req,res) =>{
   console.log(req.session)
