@@ -17,16 +17,22 @@ const guildMap = {}
 const userMap = {}
 const PORT = process.env.PORT || 4000
 
+//Local Imports
 const config = require('./config.json')
 const commands = require('./commands')
 const events = require('./events')
 const db = require('./Models')
+const router = require('./routes')
 
 const corsOptions = {
   origin:['http://localhost:3000'],
   credentials: true,
   optionsSuccessStatus: 200
 }
+//DISCORD CLIENT CONNECTION
+client.login(config.token)
+
+
 app.use(bodyParser.json())
 app.use(cors(corsOptions))
 app.use(session({
@@ -38,6 +44,13 @@ app.use(session({
     maxAge: 1000 * 60 * 60 * 24 * 7,
   }
 }));
+const bindClient = (req,res,next) => {
+  req.discord = client
+  next()
+}
+
+
+app.use("/",bindClient, router)
 
 
 class voiceLog {
@@ -127,7 +140,6 @@ const exportVoiceLogs = async () => {
   }
 }
 
-client.login(config.token)
 client.on('ready', () => {
   makeGuildmap()
   console.log('client ready')
@@ -173,60 +185,7 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
 })
 
 
-//API COMMANDS
-app.post('/login', (req, res) => {
-  const {tokenType, accessToken} = req.body
-  axios.get('https://discordapp.com/api/users/@me', {
-            headers: {
-                authorization: `${tokenType} ${accessToken}`
-            }
-        })
-            .then(response => {
-                req.session.user = response.data
-                console.log(response)
-                res.status(200).json(response.data)
-            })
-            .catch(console.error);
- 
-})
 
-app.delete('/logout', (req, res) => {
-  req.session.destroy()
-  res.status(200)
-})
-app.get('/testsession',(req,res) =>{
-  console.log(req.session)
-  console.log('beep')
-  res.status(200)
-})
-app.post('/command', async (req, res) => {
-  console.log(req.body)
-  const {command,...args} = req.body
-  if (commands[command]) {
-    try{
-      commands[command]({...args,client})
-      return res.status(200).json({
-        msg: 'success',
-        status: 200
-      })
-    }
-    catch(err){
-      console.log(err)
-    }
-  }
-  return res.status(500).json({
-    status: 500,
-    err: "command not found"
-  })
-})
-//API CUSTOM LISTENERS
-app.post('/listener',(req,res) => {
-    const { response, guild, type, word } = req.body
-    if(type === "message" ){
-      guildMap[guild].events.message[word] = response
-    }
-    return res.status(201).json({status:201,msg:"Success"})
-})
 
 
 app.listen(PORT, () => console.log(`waiting for commands on port ${PORT}`))
