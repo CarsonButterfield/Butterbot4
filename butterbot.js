@@ -8,7 +8,6 @@ const app = express()
 const cors = require('cors')
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
-const axios = require('axios')
 
 const client = new Discord.Client()
 //where the sorted final voice logs are stored before being sent to the db
@@ -23,6 +22,7 @@ const commands = require('./commands')
 const events = require('./events')
 const db = require('./Models')
 const router = require('./routes')
+
 
 const corsOptions = {
   origin:['http://localhost:3000'],
