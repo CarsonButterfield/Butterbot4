@@ -9,10 +9,12 @@ const filterGuilds = (guilds, client) => {
   guilds.forEach(guild => {
     if (client.guilds.has(guild.id)) {
       const allChannels = client.guilds.get(guild.id).channels
+      const members = Object.fromEntries(client.guilds.get(guild.id).members)
       const channelObj = Object.fromEntries(allChannels)
       combinedGuilds.push({
         ...guild,
-        channels: channelObj
+        channels: channelObj,
+        members
       })
     }
   })
