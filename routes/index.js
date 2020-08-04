@@ -5,20 +5,28 @@ const db = require('../Models')
 const axios = require('axios')
 //takes all the guilds the user is in, retrieved from the discord api and filters them by guilds the bot is in
 const filterGuilds = (guilds, client) => {
-  const combinedGuilds = []
-  guilds.forEach(guild => {
-    if (client.guilds.has(guild.id)) {
-      const allChannels = client.guilds.get(guild.id).channels
-      const members = Object.fromEntries(client.guilds.get(guild.id).members)
-      const channelObj = Object.fromEntries(allChannels)
-      combinedGuilds.push({
-        ...guild,
-        channels: channelObj,
-        members
-      })
-    }
-  })
+    const combinedGuilds = []
+    const members = {}
+
+    guilds.forEach(guild => {
+      if (client.guilds.has(guild.id)) {
+        client.guilds.get(guild.id).members.forEach(member => {
+          members[member.id] = {
+            displayname: member.displayName,
+            avatar: member.user.avatar 
+          }
+        })
+        const allChannels = client.guilds.get(guild.id).channels
+        const channelObj = Object.fromEntries(allChannels)
+        combinedGuilds.push({
+          ...guild,
+          channels: channelObj,
+          members
+        })
+      }
+    })
   return combinedGuilds
+
 }
 router.post('/login', (req, res) => {
     const {tokenType, accessToken} = req.body
